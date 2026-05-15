@@ -1,0 +1,94 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+  branches:
+    include:
+    - main
+    - features/*
+ 
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  nodeVersion: '20.x'
+  appDirectory: 'LogicaPura'
+  isFeatures: $[eq(variables['Build.SourceBranch'], 'refs/heads/features/*')]
+
+stages:
+  - stage: Build
+    jobs:
+      - job: build1
+        steps:
+        - script:
+        - task: UseNode@1
+          inputs:
+            version: $(nodeVersion)
+          displayName: 'Instalar Node.js'
+
+        - task: Cache@2
+          inputs:
+            key: 'npm | "$(Agent.OS)" | $(appDirectory)/package-lock.json'
+            restoreKeys: |
+              restoreKeys: |
+              npm | "$(Agent.OS)"
+            path: $(Build.SourcesDirectory)/$(appDirectory)/node_modules
+          displayName: 'Gerenciar chace do NPM'
+
+        - script: |
+            cd $(appDirectory)
+            npm ci
+          displayName: 'Instalar dependências'
+
+        - script: |
+            cd $(appDirectory)
+            npm run test
+          displayName: 'Rodar testes automatizados'
+
+        - script: |
+            cd $(appDirectory)
+            npm run build
+
+        - task: PublishTestResults@2
+          inputs:
+            testResultsFormat: 'JUnit'
+            testResultsFiles: '**/TEST-*.xml'
+          displayName: 'Publicar resultados de testes'
+  - stage: NotBuild
+    condition: eq(variables['isFeatures'], 'true')
+    jobs:
+      - job: notbuild2
+        steps:
+          - script:
+          - task: UseNode@1
+            inputs:
+              version: $(nodeVersion)
+            displayName: 'Instalar Node.js'
+            
+          - task: Cache@2
+            inputs:
+              key: 'npm | "$(Agent.OS)" | $(appDirectory)/package-lock.json'
+              restoreKeys: |
+                restoreKeys: |
+                npm | "$(Agent.OS)"
+              path: $(Build.SourcesDirectory)/$(appDirectory)/node_modules
+            displayName: 'Gerenciar chace do NPM'
+
+          - script: |
+              cd $(appDirectory)
+              npm ci
+            displayName: 'Instalar dependências'
+
+          - script: |
+              cd $(appDirectory)
+              npm run test
+            displayName: 'Rodar testes automatizados'
+
+            #  Parte 3
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/TEST-*.xml'
+            displayName: 'Publicar resultados de testes'
