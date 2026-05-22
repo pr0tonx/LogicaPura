@@ -10,11 +10,8 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
-
 - script: |
-    echo "My first pipeline"
-    date
-    pwd
-  displayName: 'Testando comandos básicos'
+    npm install
+    npm run build
+    npm test
+  displayName: 'Testando mais alguns comandos básicos'
