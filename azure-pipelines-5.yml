@@ -10,7 +10,28 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- script: |
-    npm install
-    npm test
-  displayName: 'Testando mais alguns comandos básicos'
+# Atualizar pacotes do sistema
+- script:
+    sudo apt-get update
+  displayName: 'Atualizar pacotes'
+
+# Instalar uma dependência real (cowsay)
+- script:
+    sudo apt-get install -y cowsay
+  displayName: 'Instalar dependência (cowsay)'
+
+# Build (simulado)
+- script: 
+    echo 'Realizando build do projeto...'
+  displayName: 'Build do projeto'
+
+# Testes (simulado)
+- script:
+    echo 'Executando testes'
+  displayName: 'Executar testes'
+
+# Executar algo real instalado
+- script: 
+    cowsay 'Pipeline funcionando com sucesso!'
+  displayName: 'Executar aplicação'
+
