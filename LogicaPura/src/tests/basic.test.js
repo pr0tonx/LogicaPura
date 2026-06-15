@@ -6,6 +6,6 @@ describe('basic test', () => {
     })
 
     it('should pass as well', () => {
-        expect(2 + 1).toBe(3)
+        expect(3 + 1).toBe(4)
     })
 })
