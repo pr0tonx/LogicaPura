@@ -42,6 +42,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
+            -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.organization=pr0tonx
             -Dsonar.projectKey=pr0tonx_LogicaPura
             -Dsonar.sources=LogicaPura/src
