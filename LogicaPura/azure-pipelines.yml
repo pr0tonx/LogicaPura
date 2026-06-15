@@ -1,0 +1,97 @@
+trigger:
+  branches:
+    include:
+      - main
+      - features/*
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  nodeVersion: '20.x'
+  appDirectory: 'LogicaPura'
+
+stages:
+  - stage: CI
+    displayName: 'Integração Contínua'
+    jobs:
+      - job: Test
+        displayName: 'Testes automatizados'
+        steps:
+          - checkout: self
+
+          - task: UseNode@1
+            displayName: 'Instalar Node.js'
+            inputs:
+              version: '$(nodeVersion)'
+
+          - task: Cache@2
+            displayName: 'Cache do node_modules'
+            inputs:
+              key: 'npm | "$(Agent.OS)" | $(appDirectory)/package-lock.json'
+              restoreKeys: |
+                npm | "$(Agent.OS)"
+              path: '$(Build.SourcesDirectory)/$(appDirectory)/node_modules'
+
+          - script: |
+              npm ci
+            workingDirectory: '$(appDirectory)'
+            displayName: 'Instalar dependências'
+
+          - script: |
+              npm test
+            workingDirectory: '$(appDirectory)'
+            displayName: 'Executar testes'
+            env:
+              NODE_ENV: test
+            continueOnError: true
+
+          - task: PublishTestResults@2
+            displayName: 'Publicar resultados dos testes'
+            condition: always()
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '$(appDirectory)/test-results.xml'
+              failTaskOnFailedTests: true
+
+  - stage: CE
+    displayName: 'Entrega Contínua'
+    dependsOn: CI
+    condition: and(succeeded(), not(startsWith(variables['Build.SourceBranch'], 'refs/heads/features/')))
+    jobs:
+      - job: BuildAndPublish
+        displayName: 'Build e publicação do artefato'
+        steps:
+          - checkout: self
+
+          - task: UseNode@1
+            displayName: 'Instalar Node.js'
+            inputs:
+              version: '$(nodeVersion)'
+
+          - task: Cache@2
+            displayName: 'Cache do node_modules'
+            inputs:
+              key: 'npm | "$(Agent.OS)" | $(appDirectory)/package-lock.json'
+              restoreKeys: |
+                npm | "$(Agent.OS)"
+              path: '$(Build.SourcesDirectory)/$(appDirectory)/node_modules'
+
+          - script: |
+              npm ci
+            workingDirectory: '$(appDirectory)'
+            displayName: 'Instalar dependências'
+
+          - script: |
+              npm run build
+            workingDirectory: '$(appDirectory)'
+            displayName: 'Gerar build de produção'
+            env:
+              NODE_ENV: production
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publicar artefato dist'
+            inputs:
+              PathtoPublish: '$(appDirectory)/dist'
+              ArtifactName: 'drop'
+              publishLocation: 'Container'

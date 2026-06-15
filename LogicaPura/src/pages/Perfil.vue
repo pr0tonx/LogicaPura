@@ -92,8 +92,8 @@ export default {
     };
   },
   methods: {
+    // Chama a mutation
     saveChanges() {
-      // Chama a mutation passando o objeto com os novos dados
       this.$store.commit('UPDATE_USER_DATA', {
         name: this.formData.name,
         bio: this.formData.bio
